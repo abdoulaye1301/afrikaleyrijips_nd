@@ -10,7 +10,6 @@ st.set_page_config(
 profil = Image.open("Logo Afrika Leyri.png")
 st.logo(profil)
 
-
 st.title("Éditeur Excel avec plusieurs feuilles")
 # Upload du fichier Excel
 Chargement = st.sidebar.file_uploader(" 📁 Charger un fichier Excel", type=["xlsx"])
@@ -30,6 +29,8 @@ if Chargement:
     # Définir les chemins des fichiers source et destination
     donnee["Date"] = donnee["Date"].dt.date
     donnee["Prix Total"] = donnee["Quantites"] * donnee["Prix_Unitaire"]
+    # donnee["Mois"] = donnee["Date"].dt.month
+
     # Choix de l’onglet
     menu = st.sidebar.selectbox("Navigation", ["Kamlac", "Opération"])
 
@@ -42,42 +43,58 @@ if Chargement:
             "Opération", ("Commande", "Livraison", "Aucune")
         )
         donnee = donnee[donnee["Operation"] == operation]
-        st.dataframe(donnee)
-
+        if operation == "Aucune":
+            nomcol = donnee.columns.tolist()
+            nomcol.remove("Prix_Unitaire")
+            nomcol.remove("Quantites")
+            nomcol.remove("Produit")
+            nomcol.remove("Prix Total")
+            st.dataframe(donnee[nomcol])
+        else:
+            st.dataframe(donnee)
+    else:
+        st.write(
+            "La colonne Opération ne se trouve pas dans les colonnes selectionnées"
+        )
+    nom_nouvelle_feuille = st.sidebar.text_input("Nom de la feuille :")
     if st.button("Sauvegarder"):
         # Définir le nom sous lequel la feuille sera enregistrée dans le fichier de destination
-        nom_nouvelle_feuille = st.sidebar.text_input("Nom de la feuille :", "NDAO")
-        # Charger le fichier original dans openpyxl
-        memorise_nouvelle_feuille = io.BytesIO(Chargement.getvalue())
-        wb = load_workbook(memorise_nouvelle_feuille)
+        if nom_nouvelle_feuille.strip() == "":
+            st.warning(
+                "Veuillez renseigner le nom de la feuille dans la barre de naviagation."
+            )
+        else:
+            # Charger le fichier original dans openpyxl
+            memorise_nouvelle_feuille = io.BytesIO(Chargement.getvalue())
+            wb = load_workbook(memorise_nouvelle_feuille)
 
-        # Supprimer la feuille si elle existe déjà (et n'est pas la seule)
-        if nom_nouvelle_feuille in wb.sheetnames:
-            if len(wb.sheetnames) > 1:
-                del wb[nom_nouvelle_feuille]
-            else:
-                st.error("Impossible de supprimer la seule feuille visible.")
-                st.stop()
+            # Supprimer la feuille si elle existe déjà (et n'est pas la seule)
+            if nom_nouvelle_feuille in wb.sheetnames:
+                if len(wb.sheetnames) > 1:
+                    del wb[nom_nouvelle_feuille]
+                else:
+                    st.error("Impossible de supprimer la seule feuille visible.")
+                    st.stop()
 
-        # Copie de toutes les feuilles existantes dans un nouveau Excel
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            # Copier les anciennes feuilles
-            for feuille in wb.sheetnames:
-                data = pd.read_excel(memorise_nouvelle_feuille, sheet_name=feuille)
-                data.to_excel(writer, sheet_name=feuille, index=False)
+            # Copie de toutes les feuilles existantes dans un nouveau Excel
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine="openpyxl") as writer:
+                # Copier les anciennes feuilles
+                for feuille in wb.sheetnames:
+                    data = pd.read_excel(memorise_nouvelle_feuille, sheet_name=feuille)
+                    data.to_excel(writer, sheet_name=feuille, index=False)
 
-            # Ajouter la feuille modifiée
-            donnee.to_excel(writer, sheet_name=nom_nouvelle_feuille, index=False)
+                # Ajouter la feuille modifiée
+                donnee.to_excel(writer, sheet_name=nom_nouvelle_feuille, index=False)
 
-        st.success("✅ Fichier modifié avec succès.")
+            st.success("✅ Fichier modifié avec succès.")
 
-        # Bouton de téléchargement
-        st.download_button(
-            label="📥 Télécharger",
-            data=output.getvalue(),
-            file_name="KAMLAC_RZ.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
+            # Bouton de téléchargement
+            st.download_button(
+                label="📥 Télécharger",
+                data=output.getvalue(),
+                file_name="KAMLAC_RZ.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
 else:
     st.info("Veuillez charger un fichier pour commencer.")
