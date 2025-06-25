@@ -40,7 +40,7 @@ if Chargement:
 
     elif menu == "Opération":
         operation = st.sidebar.selectbox(
-            "Opération", ("Commande", "Livraison", "Aucune")
+            "Type d'opération", ("Commande", "Livraison", "Aucune")
         )
         donnee = donnee[donnee["Operation"] == operation]
         if operation == "Aucune":
