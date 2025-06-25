@@ -4,7 +4,9 @@ from PIL import Image
 from openpyxl import load_workbook
 import io
 
-st.set_page_config(page_title="Ingénieur NDAO", layout="wide")
+st.set_page_config(
+    page_title="Ingénieur NDAO", layout="wide", page_icon="ndao abdoulaye.png"
+)
 profil = Image.open("Logo Afrika Leyri.png")
 st.logo(profil)
 
