@@ -103,7 +103,5 @@ if Chargement:
                 file_name="KAMLAC_RZ.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
-    st.subheader("Regroupement des ventes et ordonnées par Date et Prénom du RZ")
-    st.dataframe(donnee_agre.sort_values(by=["Date", "Prenom_Nom_RZ"], ascending=False))
 else:
     st.info("Veuillez charger un fichier pour commencer.")
