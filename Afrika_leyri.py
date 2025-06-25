@@ -56,6 +56,13 @@ if Chargement:
         st.write(
             "La colonne Opération ne se trouve pas dans les colonnes selectionnées"
         )
+
+    donnee_agre = (
+        donnee.groupby(["Date", "Prenom_Nom_RZ", "Operation"])
+        .agg({"Nom_du_magasin": "count", "Quantites": "sum", "Prix Total": "sum"})
+        .reset_index()
+    )
+
     nom_nouvelle_feuille = st.sidebar.text_input("Nom de la feuille :")
     if st.button("Sauvegarder"):
         # Définir le nom sous lequel la feuille sera enregistrée dans le fichier de destination
@@ -96,5 +103,7 @@ if Chargement:
                 file_name="KAMLAC_RZ.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
+    st.subheader("Regroupement des ventes et ordonnées par Date et Prénom du RZ")
+    st.dataframe(donnee_agre.sort_values(by=["Date", "Prenom_Nom_RZ"], ascending=False))
 else:
     st.info("Veuillez charger un fichier pour commencer.")
