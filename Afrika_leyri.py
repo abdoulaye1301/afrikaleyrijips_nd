@@ -48,4 +48,17 @@ gra=px.histogram(pack, x="Numéro_Pack", y="Nombre",
 colon[1].plotly_chart(gra, use_container_width=True)
 
 st.subheader("📋 Données brutes")
-st.plotly_chart(px.pie(base, names="Operation"), use_container_width=True)  
+colon[0].plotly_chart(px.pie(base, names="Operation"), use_container_width=True)  
+fig = px.bar(
+    base,
+    x="Date",
+    y="Montant",
+    color="Prenom Nom",
+    title="📊 Performance des agents"
+)
+colon[1].plotly_chart(fig, use_container_width=True)
+
+# Performance des agents
+donnee_agre = base.groupby(["Prenom Nom","Operation"]).agg({"Telephone_Client": "count", "Numéro_Pack": "count", "Montant": "sum"}).reset_index()
+st.subheader("Récapitulatif des collectes par commerciaux")
+st.dataframe(donnee_agre.sort_values(by=["Prenom Nom", "Montant"], ascending=False))
