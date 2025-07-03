@@ -58,7 +58,7 @@ if Chargement:
         )
 
     donnee_agre = (
-        donnee.groupby(["Date", "Prenom_Nom_RZ", "secteur", "Operation"])
+        donnee.groupby(["Date", "Prenom_Nom_RZ", "secteur","Telephone_Client","Produit", "Operation"])
         .agg({"Nom_du_magasin": "count", "Quantites": "sum", "Prix Total": "sum"})
         .reset_index()
     )
