@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from PIL import Image
+import plotly.express as px
 from openpyxl import load_workbook
 import io
 
@@ -12,98 +13,39 @@ st.logo(profil)
 
 st.title("Éditeur Excel avec plusieurs feuilles")
 # Upload du fichier Excel
-Chargement = st.sidebar.file_uploader(" 📁 Charger un fichier Excel", type=["xlsx"])
+donnee = pd.read_excel("https://kf.kobotoolbox.org/api/v2/assets/aiukigovSDuthG6GcpfJc4/export-settings/esY6CBjs5ceExzwiZ7xMRzP/data.xlsx")
 
-if Chargement:
-    # Lire toutes les feuilles
-    xls = pd.ExcelFile(Chargement)
-    feuilles = xls.sheet_names
 
-    # Choisir une feuille à modifier
-    feuille_selectionnee = st.sidebar.selectbox(
-        "Choisissez une feuille à éditer :", feuilles
-    )
 
-    # Charger la feuille sélectionnée
-    donnee = pd.read_excel(xls, sheet_name=feuille_selectionnee)
-    # Définir les chemins des fichiers source et destination
-    donnee["Date"] = donnee["Date"].dt.date
-    donnee["Prix Total"] = donnee["Quantites"] * donnee["Prix_Unitaire"]
-    # donnee["Mois"] = donnee["Date"].dt.month
+# Choisir une feuille à modifier
+#feuille_selectionnee = st.sidebar.selectbox("Choisissez une feuille à éditer :",  )
 
-    # Choix de l’onglet
-    menu = st.sidebar.selectbox("Navigation", ["Kamlac", "Opération"])
+# Charger la feuille sélectionnée
+nomscol=["Date","Prenom Nom", "Zone", "Prenom_Nom_Client", "Telephone_Client", 
+         "Adresse", "Operation", "Numéro_Pack", "Reference Commande", "Montant", "Commentaire"]
+# Définir les chemins des fichiers source et destination
+base=donnee[nomscol]
+base["Date"] = base["Date"].dt.date
+# donnee["Mois"] = donnee["Date"].dt.month
+base
+# Agrégation par jour
+evolution = base.groupby("Date").size().reset_index(name="Nombre")
+pack = base.groupby("Numéro_Pack").size().reset_index(name="Nombre")
 
-    if menu == "Kamlac":
-        st.subheader("Contenu de la feuille sélectionnée :")
-        st.dataframe(donnee)
+st.subheader("📊 Évolution des collectes dans le temps (interactive)")
+col= st.columns(3)
+col[0].metric("📌 Total de collectes", len(base))
+col[1].metric("📌 Total de références de commandes", base["Reference Commande"].nunique())
+col[2].metric("📌 Total de montants", base["Montant"].sum())
+# Représentation graphique avec plotly
+colon= st.columns(2)
+fig = px.line(evolution, x="Date", y="Nombre",
+                title="Nombre de collectes par jour",
+                markers=True)
+colon[0].plotly_chart(fig, use_container_width=True)
+gra=px.histogram(pack, x="Numéro_Pack", y="Nombre",
+                 title="Nombre de collectes par numéro de pack",)
+colon[1].plotly_chart(gra, use_container_width=True)
 
-    elif menu == "Opération":
-        operation = st.sidebar.selectbox(
-            "Type d'opération", ("Commande", "Livraison", "Aucune")
-        )
-        donnee = donnee[donnee["Operation"] == operation]
-        if operation == "Aucune":
-            nomcol = donnee.columns.tolist()
-            nomcol.remove("Prix_Unitaire")
-            nomcol.remove("Quantites")
-            nomcol.remove("Produit")
-            nomcol.remove("Prix Total")
-            st.dataframe(donnee[nomcol])
-        else:
-            st.dataframe(donnee)
-    else:
-        st.write(
-            "La colonne Opération ne se trouve pas dans les colonnes selectionnées"
-        )
-
-    donnee_agre = (
-        donnee.groupby(["Date", "Prenom_Nom_RZ", "secteur","Telephone_Client","Produit", "Operation"])
-        .agg({"Nom_du_magasin": "count", "Quantites": "sum", "Prix Total": "sum"})
-        .reset_index()
-    )
-
-    nom_nouvelle_feuille = st.sidebar.text_input("Nom de la feuille :")
-    if st.button("Sauvegarder"):
-        # Définir le nom sous lequel la feuille sera enregistrée dans le fichier de destination
-        if nom_nouvelle_feuille.strip() == "":
-            st.warning(
-                "Veuillez renseigner le nom de la feuille dans la barre de naviagation."
-            )
-        else:
-            # Charger le fichier original dans openpyxl
-            memorise_nouvelle_feuille = io.BytesIO(Chargement.getvalue())
-            wb = load_workbook(memorise_nouvelle_feuille)
-
-            # Supprimer la feuille si elle existe déjà (et n'est pas la seule)
-            if nom_nouvelle_feuille in wb.sheetnames:
-                if len(wb.sheetnames) > 1:
-                    del wb[nom_nouvelle_feuille]
-                else:
-                    st.error("Impossible de supprimer la seule feuille visible.")
-                    st.stop()
-
-            # Copie de toutes les feuilles existantes dans un nouveau Excel
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine="openpyxl") as writer:
-                # Copier les anciennes feuilles
-                for feuille in wb.sheetnames:
-                    data = pd.read_excel(memorise_nouvelle_feuille, sheet_name=feuille)
-                    data.to_excel(writer, sheet_name=feuille, index=False)
-
-                # Ajouter la feuille modifiée
-                donnee.to_excel(writer, sheet_name=nom_nouvelle_feuille, index=False)
-
-            st.success("✅ Fichier modifié avec succès.")
-
-            # Bouton de téléchargement
-            st.download_button(
-                label="📥 Télécharger",
-                data=output.getvalue(),
-                file_name="KAMLAC_RZ.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
-    st.subheader("Regroupement des ventes et ordonnées par Date et Prénom du RZ")
-    st.dataframe(donnee_agre.sort_values(by=["Date", "Prenom_Nom_RZ"], ascending=False))
-else:
-    st.info("Veuillez charger un fichier pour commencer.")
+st.subheader("📋 Données brutes")
+st.plotly_chart(px.pie(base, names="Operation"), use_container_width=True)  
