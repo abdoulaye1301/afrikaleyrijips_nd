@@ -78,9 +78,8 @@ def visualiser_donnees(base):
     )
 # --- Fonction de tableau de bord ---
 def tableau_de_bord(base):
-    st.title("📊 Tableau de bord des ventes et installations")
             # Agrégation par jour
-    evolution = base.groupby("Date").size().reset_index(name="Nombre")
+    evolution = base.groupby("Date").agg({"Montant": "sum"}).reset_index()
     pack = base.groupby("Numéro_Pack").size().reset_index(name="Nombre de pack")
 
     st.subheader("📊 Évolution des ventes et installations des commerciaux")
@@ -90,24 +89,30 @@ def tableau_de_bord(base):
     col[2].metric("📌 CA Réalisé", base["Montant"].sum())
     # Représentation graphique avec plotly
     colon= st.columns(2)
-    fig = px.line(evolution, x="Date", y="Nombre",
-                    title="Nombre de ventes et installations par jour",
-                    markers=True)
-    colon[0].plotly_chart(fig, use_container_width=True)
+    
     gra=px.histogram(pack, x="Numéro_Pack", y="Nombre de pack",
                     title="Nombre de ventes par pack",)
-    gra.update_layout( xaxis_title="Numéro de Pack", yaxis_title="Nombre de Packs")
-    colon[1].plotly_chart(gra, use_container_width=True)
+    gra.update_layout( xaxis_title="Numéro de Pack",xaxis=dict(tickmode='linear',dtick=1), yaxis_title="Nombre de Packs")
+    colon[0].plotly_chart(gra, use_container_width=True)
 
-    colon[0].plotly_chart(px.pie(base, names="Operation"), use_container_width=True)  
-    fig = px.bar(
-        base,
-        x="Date",
-        y="Montant",
-        color="Prenom Nom",
-        title="📊 Performance des agents"
-    )
-    colon[1].plotly_chart(fig, use_container_width=True)
+
+# graphique des operations
+    colon[1].write("Répartition des opérations")
+    colon[1].plotly_chart(px.pie(base, names="Operation"), use_container_width=True,title="Répartition des opérations")  
+
+
+    # Evolution des ventes
+    fig = px.line(evolution, x="Date", y="Montant",
+                    title="CA des ventes par jour",
+                    markers=True)
+    fig.update_layout(xaxis=dict(tickformat="%d-%m",
+                      tickangle=-45, 
+                      tickvals=base["Date"].unique()),
+                      yaxis=dict(tickmode='linear',tick0=0, dtick=1))
+    st.plotly_chart(fig, use_container_width=True)
+
+
+  
 
     # Performance des agents
     donnee_agre = base.groupby(["Prenom Nom","Operation"]).agg(
