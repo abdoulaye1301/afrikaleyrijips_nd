@@ -6,7 +6,7 @@ from openpyxl import load_workbook
 import io
 
 st.set_page_config(
-    page_title="Ingénieur NDAO", layout="wide", page_icon="ndao abdoulaye.png"
+    page_title="AFRIKA LEYRI", layout="wide", page_icon="ndao abdoulaye.png"
 )
 profil = Image.open("Logo Afrika Leyri.png")
 st.logo(profil)
@@ -22,26 +22,15 @@ PASSWORD = "1234"
 
 if "authentifie" not in st.session_state:
     st.session_state.authentifie = False
-        
-# --- Navigation ---
-page = st.sidebar.radio("📁 Menu", ["Visualisation", "Tableau de bord sécurisé"])
-# URL de récupération des données en CSV
-donnee = pd.read_excel(f"https://kf.kobotoolbox.org/api/v2/assets/aiukigovSDuthG6GcpfJc4/export-settings/esY6CBjs5ceExzwiZ7xMRzP/data.xlsx")
 
+def to_excel(df):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Données')
+    output.seek(0)
+    return output
 
-
-# Choisir une feuille à modifier
-#feuille_selectionnee = st.sidebar.selectbox("Choisissez une feuille à éditer :",  )
-
-# Charger la feuille sélectionnée
-nomscol=["Date","Prenom Nom", "Zone", "Prenom_Nom_Client", "Telephone_Client", 
-        "Adresse", "Operation", "Numéro_Pack", "Reference Commande", "Montant", "Commentaire"]
-# Définir les chemins des fichiers source et destination
-base=donnee[nomscol]
-#base["Date"] = base["Date"].dt.date
-# donnee["Mois"] = donnee["Date"].dt.month
-# --- Page 1 : Visualisation simple ---
-if page == "Visualisation":
+def login():
     with st.form("login_form"):
         st.subheader("🔐 Connexion requise")
         user = st.text_input("Nom d'utilisateur")
@@ -50,78 +39,120 @@ if page == "Visualisation":
         if submit:
             if user == USER and pwd == PASSWORD:
                 st.session_state.authentifie = True
-                st.success("✅ Connexion réussie")
-                st.title("📄 Visualisation des données")
-                    # Définir les bornes du slider
-                base["Date"] = base["Date"].dt.date
-                min_date = min(base["Date"])
-                max_date = max(base["Date"])
-
-                # Slider Streamlit pour filtrer une plage de dates
-                start_date, end_date = st.slider(
-                    "Sélectionnez une plage de dates",
-                    min_value=min_date,
-                    max_value=max_date,
-                    value=(min_date, max_date),  # valeur par défaut (tout)
-                    format="DD/MM/YYYY"
-                )
-
-                # Filtrer les données selon la plage sélectionnée
-                base = base[(base["Date"] >= start_date) & (base["Date"] <= end_date)]
-
-                # Afficher les résultats
-                st.write(f"Résultats entre {start_date} et {end_date} :")
-                st.dataframe(base)
+                st.success("Bienvenue dans l'application Afrika Leyri !")
             else:
                 st.error("❌ Identifiants incorrects")
+                st.warning("Veuillez vous connecter pour accéder aux données.")
+                st.stop()
+# --- Onction de vuisualisation des données ---
+def visualiser_donnees(base):
+    st.title("📄 Visualisation des données")
+    # Définir les bornes du slider
+    base["Date"] = base["Date"].dt.date
+    min_date = min(base["Date"])
+    max_date = max(base["Date"])
 
-# --- Page 2 : Tableau de bord (protégé) ---
-elif page == "Tableau de bord sécurisé":
+    # Slider Streamlit pour filtrer une plage de dates
+    start_date, end_date = st.slider(
+        "Sélectionnez une plage de dates",
+        min_value=min_date,
+        max_value=max_date,
+        value=(min_date, max_date),  # valeur par défaut (tout)
+        format="DD/MM/YYYY"
+    )
+
+    # Filtrer les données selon la plage sélectionnée
+    base = base[(base["Date"] >= start_date) & (base["Date"] <= end_date)]
+
+    # Afficher les résultats
+    st.write(f"Résultats entre {start_date} et {end_date} :")
+    st.dataframe(base)
+    # Téléchargement des données en format Excel
+    excel_data = to_excel(base)
+
+    st.download_button(
+        label="📄 Télécharger les données",
+        data=excel_data,
+        file_name="Données JIPS.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+# --- Fonction de tableau de bord ---
+def tableau_de_bord(base):
+    st.title("📊 Tableau de bord des ventes et installations")
+            # Agrégation par jour
+    evolution = base.groupby("Date").size().reset_index(name="Nombre")
+    pack = base.groupby("Numéro_Pack").size().reset_index(name="Nombre de pack")
+
+    st.subheader("📊 Évolution des ventes et installations des commerciaux")
+    col= st.columns(3)
+    col[0].metric("📌 Nombre de clients", len(base))
+    col[1].metric("📌 Total commandes", base["Reference Commande"].nunique())
+    col[2].metric("📌 CA Réalisé", base["Montant"].sum())
+    # Représentation graphique avec plotly
+    colon= st.columns(2)
+    fig = px.line(evolution, x="Date", y="Nombre",
+                    title="Nombre de ventes et installations par jour",
+                    markers=True)
+    colon[0].plotly_chart(fig, use_container_width=True)
+    gra=px.histogram(pack, x="Numéro_Pack", y="Nombre de pack",
+                    title="Nombre de ventes par pack",)
+    gra.update_layout( xaxis_title="Numéro de Pack", yaxis_title="Nombre de Packs")
+    colon[1].plotly_chart(gra, use_container_width=True)
+
+    colon[0].plotly_chart(px.pie(base, names="Operation"), use_container_width=True)  
+    fig = px.bar(
+        base,
+        x="Date",
+        y="Montant",
+        color="Prenom Nom",
+        title="📊 Performance des agents"
+    )
+    colon[1].plotly_chart(fig, use_container_width=True)
+
+    # Performance des agents
+    donnee_agre = base.groupby(["Prenom Nom","Operation"]).agg(
+        {"Telephone_Client": "count", "Numéro_Pack": "count", "Montant": "sum"}
+        ).reset_index()
+    donnee_agre = donnee_agre.rename(
+    columns={
+        "Telephone_Client": "Nombre de Clients",
+        "Numéro_Pack": "Nombre de Packs",
+        "Montant": "Montant",
+    }
+    )
+    st.subheader("Récapitulatif des ventes et installations des commerciaux")
+    st.dataframe(donnee_agre.sort_values(by=["Prenom Nom", "Montant"], ascending=False))
+
+# --- Navigation ---
+page = st.sidebar.radio("📁 Menu", ["Visualisation", "Tableau de bord"])
+# URL de récupération des données en CSV
+donnee = pd.read_excel(f"https://kf.kobotoolbox.org/api/v2/assets/aiukigovSDuthG6GcpfJc4/export-settings/esY6CBjs5ceExzwiZ7xMRzP/data.xlsx")
+
+
+# Charger la feuille sélectionnée
+nomscol=["Date","Prenom Nom", "Zone", "Prenom_Nom_Client", "Telephone_Client", 
+        "Adresse", "Operation", "Numéro_Pack", "Reference Commande", "Montant", "Commentaire"]
+# Définir les chemins des fichiers source et destination
+base=donnee[nomscol]
+
+
+# --- Page 1 : Visualisation simple ---
+if page == "Visualisation":
     if not st.session_state.authentifie:
         login()
+        if st.session_state.authentifie:
+            visualiser_donnees(base)
     else:
-        # --- Message de bienvenue si connecté ---
-        st.title("📊 Tableau de bord des collectes")
-                # Agrégation par jour
-        evolution = base.groupby("Date").size().reset_index(name="Nombre")
-        pack = base.groupby("Numéro_Pack").size().reset_index(name="Nombre de pack")
-
-        st.subheader("📊 Évolution des ventes et installations des commerciaux")
-        col= st.columns(3)
-        col[0].metric("📌 Total de collectes", len(base))
-        col[1].metric("📌 Total de références de commandes", base["Reference Commande"].nunique())
-        col[2].metric("📌 Total de montants", base["Montant"].sum())
-        # Représentation graphique avec plotly
-        colon= st.columns(2)
-        fig = px.line(evolution, x="Date", y="Nombre",
-                        title="Nombre de collectes par jour",
-                        markers=True)
-        colon[0].plotly_chart(fig, use_container_width=True)
-        gra=px.histogram(pack, x="Numéro_Pack", y="Nombre de pack",
-                        title="Nombre de collectes par numéro de pack",)
-        colon[1].plotly_chart(gra, use_container_width=True)
-
-        colon[0].plotly_chart(px.pie(base, names="Operation"), use_container_width=True)  
-        fig = px.bar(
-            base,
-            x="Date",
-            y="Montant",
-            color="Prenom Nom",
-            title="📊 Performance des agents"
-        )
-        colon[1].plotly_chart(fig, use_container_width=True)
-
-        # Performance des agents
-        donnee_agre = base.groupby(["Prenom Nom","Operation"]).agg(
-            {"Telephone_Client": "count", "Numéro_Pack": "count", "Montant": "sum"}
-            ).reset_index()
-        donnee_agre = donnee_agre.rename(
-        columns={
-            "Telephone_Client": "Nombre de Clients",
-            "Numéro_Pack": "Nombre de Packs",
-            "Montant": "Montant",
-        }
-    )
-        st.subheader("Récapitulatif des ventes et installations des commerciaux")
-        st.dataframe(donnee_agre.sort_values(by=["Prenom Nom", "Montant"], ascending=False))
+        visualiser_donnees(base)
+            
+# --- Page 2 : Tableau de bord (protégé) ---
+elif page == "Tableau de bord":
+    if not st.session_state.authentifie:
+        login()
+        if st.session_state.authentifie:
+            tableau_de_bord(base)
+    else:
+        tableau_de_bord(base)
+        
+        # --- Message de bienvenue si connecté --
             
