@@ -91,7 +91,8 @@ def tableau_de_bord(base):
     colon= st.columns(2)
     
     gra=px.histogram(pack, x="Numéro_Pack", y="Nombre de pack",
-                    title="Nombre de ventes par pack",)
+                    title="Nombre de ventes par pack")
+    gra.update_traces(texttemplate='%{y}', textposition='auto')
     gra.update_layout( xaxis_title="Numéro de Pack",xaxis=dict(tickmode='linear',dtick=1), yaxis_title="Nombre de Packs")
     colon[0].plotly_chart(gra, use_container_width=True)
 
@@ -103,12 +104,13 @@ def tableau_de_bord(base):
 
     # Evolution des ventes
     fig = px.line(evolution, x="Date", y="Montant",
+                  text="Montant",
                     title="CA des ventes par jour",
                     markers=True)
+    fig.update_traces(textposition="top center")
     fig.update_layout(xaxis=dict(tickformat="%d-%m",
                       tickangle=-45, 
-                      tickvals=base["Date"].unique()),
-                      yaxis=dict(tickmode='linear',tick0=0, dtick=1))
+                      tickvals=base["Date"].unique()))
     st.plotly_chart(fig, use_container_width=True)
 
 
