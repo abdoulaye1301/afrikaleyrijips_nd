@@ -84,7 +84,7 @@ def tableau_de_bord(base):
 
     st.subheader("📊 Évolution des ventes et installations des commerciaux")
     col= st.columns(3)
-    col[0].metric("📌 Nombre de clients", len(base))
+    col[0].metric("📌 Nombre d'installations", len(base))
     col[1].metric("📌 Total commandes", base["Reference Commande"].nunique())
     col[2].metric("📌 CA Réalisé", base["Montant"].sum())
     # Représentation graphique avec plotly
