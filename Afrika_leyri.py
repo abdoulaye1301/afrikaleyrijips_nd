@@ -122,7 +122,7 @@ def tableau_de_bord(base):
         ).reset_index()
     donnee_agre = donnee_agre.rename(
     columns={
-        "Telephone_Client": "Nombre de Clients",
+        "Telephone_Client": "Nombre d'installations",
         "Numéro_Pack": "Nombre de Packs",
         "Montant": "Montant",
     }
