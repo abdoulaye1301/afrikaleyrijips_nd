@@ -123,7 +123,7 @@ def tableau_de_bord(base):
     donnee_agre = donnee_agre.rename(
     columns={
         "Telephone_Client": "Nombre d'installations",
-        "Numéro_Pack": "Nombre de Packs",
+        "Numéro_Pack": "Nombre de Packs vendus",
         "Montant": "Montant",
     }
     )
