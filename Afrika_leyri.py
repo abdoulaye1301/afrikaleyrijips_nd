@@ -87,22 +87,8 @@ def tableau_de_bord(base):
     col[0].metric("📌 Nombre d'installations", int((base["Operation"] == "Installation").sum()))
     col[1].metric("📌 Total commandes", base["Reference Commande"].nunique())
     col[2].metric("📌 CA Réalisé", f"{base["Montant"].sum():,.0f}".replace(",", " ")+" XOF")
-    # Représentation graphique avec plotly
-    colon= st.columns(2)
-    
-    gra=px.histogram(pack, x="Numéro_Pack", y="Nombre de pack",
-                    title="Nombre de ventes par pack")
-    gra.update_traces(texttemplate='%{y}', textposition='auto')
-    gra.update_layout( xaxis_title="Numéro de Pack",xaxis=dict(tickmode='linear',dtick=1), yaxis_title="Nombre de Packs")
-    colon[0].plotly_chart(gra, use_container_width=True)
 
-
-# graphique des operations
-    colon[1].write("Répartition des opérations")
-    colon[1].plotly_chart(px.pie(base, names="Operation"), use_container_width=True,title="Répartition des opérations")  
-
-
-    # Evolution des ventes
+        # Evolution des ventes
     evolution["Montant_affiche"] = evolution["Montant"].map(lambda x: f"{x:,.0f}".replace(",", " "))
     fig = px.line(evolution, x="Date", y="Montant",
                   text="Montant_affiche",
@@ -115,6 +101,23 @@ def tableau_de_bord(base):
                       tickangle=-45, 
                       tickvals=base["Date"].unique()))
     st.plotly_chart(fig, use_container_width=True)
+
+
+    # Représentation graphique avec plotly
+    colon= st.columns(2)
+    gra=px.histogram(pack, x="Numéro_Pack", y="Nombre de pack",
+                    title="Nombre de ventes par pack")
+    gra.update_traces(texttemplate='%{y}', textposition='auto')
+    gra.update_layout( xaxis_title="Numéro de Pack",xaxis=dict(tickmode='linear',dtick=1), yaxis_title="Nombre de Packs")
+    colon[0].plotly_chart(gra, use_container_width=True)
+
+
+# graphique des operations
+    colon[1].write("Répartition des opérations")
+    colon[1].plotly_chart(px.pie(base, names="Operation"), use_container_width=True,title="Répartition des opérations")  
+
+
+
 
 
   
@@ -134,7 +137,7 @@ def tableau_de_bord(base):
     st.dataframe(donnee_agre.sort_values(by=["Prenom Nom", "Montant"], ascending=False))
 
 # --- Navigation ---
-page = st.sidebar.radio("📁 Menu", ["Visualisation", "Tableau de bord"])
+page = st.sidebar.radio("📁 Menu de navigation", ["Données", "Tableau de bord"])
 # URL de récupération des données en CSV
 donnee = pd.read_excel(f"https://kf.kobotoolbox.org/api/v2/assets/aiukigovSDuthG6GcpfJc4/export-settings/esY6CBjs5ceExzwiZ7xMRzP/data.xlsx")
 
@@ -146,7 +149,7 @@ nomscol=["Date","Prenom Nom", "Zone", "Prenom_Nom_Client", "Telephone_Client",
 base=donnee[nomscol]
 
 # --- Page 1 : Visualisation simple ---
-if page == "Visualisation":
+if page == "Données":
     if not st.session_state.authentifie:
         login()
         if st.session_state.authentifie:
