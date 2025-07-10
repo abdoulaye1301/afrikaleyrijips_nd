@@ -103,11 +103,14 @@ def tableau_de_bord(base):
 
 
     # Evolution des ventes
+    evolution["Montant_affiche"] = evolution["Montant"].map(lambda x: f"{x:,.0f}".replace(",", " "))
     fig = px.line(evolution, x="Date", y="Montant",
-                  text="Montant",
+                  text="Montant_affiche",
                     title="CA des ventes par jour",
                     markers=True)
-    fig.update_traces(textposition="top center")
+    fig.update_traces(marker=dict(size=8, color="red", line=dict(width=2, color="DarkSlateGrey")),
+                      textfont=dict(size=12, color="white"),
+    textposition="top center")
     fig.update_layout(xaxis=dict(tickformat="%d-%m",
                       tickangle=-45, 
                       tickvals=base["Date"].unique()))
@@ -141,7 +144,6 @@ nomscol=["Date","Prenom Nom", "Zone", "Prenom_Nom_Client", "Telephone_Client",
         "Adresse", "Operation", "Numéro_Pack", "Reference Commande", "Montant"]
 # Définir les chemins des fichiers source et destination
 base=donnee[nomscol]
-
 
 # --- Page 1 : Visualisation simple ---
 if page == "Visualisation":
