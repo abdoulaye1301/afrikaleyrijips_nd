@@ -32,7 +32,7 @@ def to_excel(df):
 
 def login():
     with st.form("login_form"):
-        st.subheader("🔐 Connexion requise")
+        st.subheader("🔐 IDENTIFICATION")
         user = st.text_input("Nom d'utilisateur")
         pwd = st.text_input("Mot de passe", type="password")
         submit = st.form_submit_button("Connexion")
