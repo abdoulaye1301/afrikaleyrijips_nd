@@ -66,7 +66,7 @@ def visualiser_donnees(base):
 
     # Afficher les résultats
     st.write(f"Résultats entre {start_date} et {end_date} :")
-    st.dataframe(base)
+    st.dataframe(base.sort_values(by=["Date","Prenom Nom"], ascending=False))
     # Téléchargement des données en format Excel
     excel_data = to_excel(base)
 
