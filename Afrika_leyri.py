@@ -86,7 +86,7 @@ def tableau_de_bord(base):
     col= st.columns(3)
     col[0].metric("📌 Nombre d'installations", int((base["Operation"] == "Installation").sum()))
     col[1].metric("📌 Total commandes", base["Reference Commande"].nunique())
-    col[2].metric("📌 CA Réalisé", base["Montant"].sum())
+    col[2].metric("📌 CA Réalisé", f"{base["Montant"].sum():,.0f}".replace(",", " "))
     # Représentation graphique avec plotly
     colon= st.columns(2)
     
