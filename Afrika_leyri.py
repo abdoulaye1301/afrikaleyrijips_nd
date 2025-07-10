@@ -17,8 +17,8 @@ st.logo(profil)
 # Mot de passe : aiuki
 # Upload du fichier Excel
 # --- Authentification simple ---
-USER = "admin"
-PASSWORD = "1234"
+USER = "AFRIKA LEYRI"
+PASSWORD = "Afrikaleyri2025"
 
 if "authentifie" not in st.session_state:
     st.session_state.authentifie = False
