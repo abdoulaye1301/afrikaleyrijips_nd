@@ -138,7 +138,7 @@ donnee = pd.read_excel(f"https://kf.kobotoolbox.org/api/v2/assets/aiukigovSDuthG
 
 # Charger la feuille sélectionnée
 nomscol=["Date","Prenom Nom", "Zone", "Prenom_Nom_Client", "Telephone_Client", 
-        "Adresse", "Operation", "Numéro_Pack", "Reference Commande", "Montant", "Commentaire"]
+        "Adresse", "Operation", "Numéro_Pack", "Reference Commande", "Montant"]
 # Définir les chemins des fichiers source et destination
 base=donnee[nomscol]
 
