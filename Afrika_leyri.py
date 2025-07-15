@@ -140,7 +140,12 @@ def tableau_de_bord(base):
     )
     st.subheader("Récapitulatif des ventes et installations des commerciaux")
     st.dataframe(donnee_agre.sort_values(by=["Prenom Nom", "Montant"], ascending=False))
-
+    # Performance des agents
+    donnee_vente = base.groupby(["Zone","Operation"]).agg(
+        {"Numéro_Pack": "count", "Montant": "sum"}
+        ).reset_index()
+    st.subheader("Récapitulatif des ventes par Zone")
+    st.dataframe(donnee_vente.sort_values(by=["Numéro_Pack", "Montant"], ascending=False))
 # --- Navigation ---
 page = st.sidebar.radio("📁 Menu de navigation", ["Données", "Tableau de bord"])
 # URL de récupération des données en CSV
