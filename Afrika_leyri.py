@@ -84,9 +84,12 @@ def tableau_de_bord(base):
 
     st.subheader("📊 Évolution des ventes et installations des commerciaux")
     col= st.columns(3)
-    col[0].metric("📌 Nombre d'installations", int((base["Operation"] == "Installation").sum()))
-    col[1].metric("📌 Total commandes", base["Reference Commande"].nunique())
-    col[2].metric("📌 CA Réalisé", f"{base["Montant"].sum():,.0f}".replace(",", " ")+" XOF")
+    col[0].metric("🔢 Nombre d'installations", int((base["Operation"] == "Installation").sum()))
+    col[1].metric("🎗️Total commandes", base["Reference Commande"].nunique())
+    col[2].metric("💴 CA Réalisé", f"{base["Montant"].sum():,.0f}".replace(",", " ")+" XOF")
+    colone= st.columns(2)
+    colone[0].metric("🔢 Nombre de pack de 5000", int((base["Montant"] < 10000).sum()))
+    colone[1].metric("🔢 Nombre de pack de 10000", int((base["Montant"] >= 10000).sum()))
 
         # Evolution des ventes
     evolution["Montant_affiche"] = evolution["Montant"].map(lambda x: f"{x:,.0f}".replace(",", " "))
