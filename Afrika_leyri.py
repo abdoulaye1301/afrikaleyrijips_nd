@@ -141,7 +141,7 @@ def tableau_de_bord(base):
     st.subheader("Récapitulatif des ventes et installations des commerciaux")
     st.dataframe(donnee_agre.sort_values(by=["Prenom Nom", "Montant"], ascending=False))
     # Performance des agents
-    donnee_vente = base.groupby(["Zone","Operation"]).agg(
+    donnee_vente = base.groupby(["Zone"]).agg(
         {"Numéro_Pack": "count", "Montant": "sum"}
         ).reset_index()
     st.subheader("Récapitulatif des ventes par Zone")
